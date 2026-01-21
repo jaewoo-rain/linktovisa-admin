@@ -1,27 +1,48 @@
-
+// 파일: src/components/Admin/AdminDetailPanel.tsx
 import { Role } from "../../api/adminConsultation";
 import { formatDate, joinPhone } from "../../utils/adminFormat";
+
+type Props = {
+    role: Role;
+    selectedId: string | null;
+    loading: boolean;
+    detail: any | null;
+
+    // ✅ 삭제 기능 추가
+    onDelete: (id: string) => void;
+    deleting: boolean;
+};
 
 export default function AdminDetailPanel({
     role,
     selectedId,
     loading,
     detail,
-}: {
-    role: Role;
-    selectedId: string | null;
-    loading: boolean;
-    detail: any | null;
-}) {
+    onDelete,
+    deleting,
+}: Props) {
     return (
         <div className="bg-white border rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b">
-                <div className="font-bold">상세</div>
-                <div className="text-xs text-gray-500 mt-1">
-                    {selectedId ? `ID: ${selectedId}` : "목록에서 한 항목을 선택하세요"}
+            {/* 헤더 */}
+            <div className="px-4 py-3 border-b flex items-start justify-between gap-3">
+                <div>
+                    <div className="font-bold">상세</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                        {selectedId ? `ID: ${selectedId}` : "목록에서 한 항목을 선택하세요"}
+                    </div>
                 </div>
+
+                {/* ✅ 삭제 버튼 */}
+                <button
+                    className="px-3 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold disabled:opacity-40"
+                    disabled={!selectedId || loading || deleting}
+                    onClick={() => selectedId && onDelete(selectedId)}
+                >
+                    {deleting ? "삭제 중..." : "삭제"}
+                </button>
             </div>
 
+            {/* 본문 */}
             <div className="p-4">
                 {loading ? (
                     <div className="text-gray-500">불러오는 중...</div>
@@ -66,14 +87,16 @@ export default function AdminDetailPanel({
                                     <div className="text-sm text-gray-700 space-y-1">
                                         <div>담당 업무: {detail?.conditions?.task || "-"}</div>
                                         <div>
-                                            근무 요일: {(detail?.conditions?.workDays || []).join(", ") || "-"}
+                                            근무 요일:{" "}
+                                            {(detail?.conditions?.workDays || []).join(", ") || "-"}
                                         </div>
                                         <div>
                                             근무 시간: {detail?.conditions?.startTime || "-"} ~{" "}
                                             {detail?.conditions?.endTime || "-"}
                                         </div>
                                         <div>
-                                            근무 형태: {(detail?.conditions?.jobTypes || []).join(", ") || "-"}
+                                            근무 형태:{" "}
+                                            {(detail?.conditions?.jobTypes || []).join(", ") || "-"}
                                         </div>
                                         <div>급여(원): {detail?.conditions?.salaryRaw || "-"}</div>
                                     </div>
@@ -83,10 +106,16 @@ export default function AdminDetailPanel({
                                 <div className="pt-3 border-t">
                                     <div className="font-bold mb-2">추가 정보</div>
                                     <div className="text-sm text-gray-700 space-y-1">
-                                        <div>경력: {(detail?.additional?.careers || []).join(", ") || "-"}</div>
-                                        <div>복지/혜택: {(detail?.additional?.welfares || []).join(", ") || "-"}</div>
                                         <div>
-                                            한국어 수준: {(detail?.additional?.koreanLevels || []).join(", ") || "-"}
+                                            경력: {(detail?.additional?.careers || []).join(", ") || "-"}
+                                        </div>
+                                        <div>
+                                            복지/혜택:{" "}
+                                            {(detail?.additional?.welfares || []).join(", ") || "-"}
+                                        </div>
+                                        <div>
+                                            한국어 수준:{" "}
+                                            {(detail?.additional?.koreanLevels || []).join(", ") || "-"}
                                         </div>
                                         <div>우대조건: {detail?.additional?.preference || "-"}</div>
                                     </div>

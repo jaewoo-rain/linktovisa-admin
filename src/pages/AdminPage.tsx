@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { fetchConsultationDetail, fetchConsultationList, Role } from "../api/adminConsultation";
+import {
+    fetchConsultationDetail,
+    fetchConsultationList,
+    deleteConsultation,
+    Role,
+} from "../api/adminConsultation";
 import AdminHeader from "../components/Admin/AdminHeader";
 import AdminPagination from "../components/Admin/AdminPagination";
 import AdminTable from "../components/Admin/AdminTable";
@@ -23,6 +28,8 @@ export default function AdminPage() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [detail, setDetail] = useState<any | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+
+    const [deleting, setDeleting] = useState(false);
 
     const loadList = async (opts?: { q?: string; page?: number; role?: Role }) => {
         setLoading(true);
@@ -62,7 +69,6 @@ export default function AdminPage() {
         }
     };
 
-    // ✅ 훅은 항상 호출되게 두고, 내부에서 authorized 체크
     useEffect(() => {
         if (!authorized) return;
 
@@ -73,9 +79,8 @@ export default function AdminPage() {
     }, [authorized, role, page]);
 
     const handlePasswordSubmit = () => {
-        if (password === ADMIN_PASSWORD) {
-            setAuthorized(true);
-        } else {
+        if (password === ADMIN_PASSWORD) setAuthorized(true);
+        else {
             alert("비밀번호가 틀렸습니다");
             setPassword("");
         }
@@ -94,7 +99,30 @@ export default function AdminPage() {
         setDetail(null);
     };
 
-    // 🔒 여기서 early return 해도 됨 (위에서 훅은 이미 호출됨)
+    const handleDelete = async (id: string) => {
+        const ok = confirm("정말 삭제할까요? 삭제하면 되돌릴 수 없습니다.");
+        if (!ok) return;
+
+        setDeleting(true);
+        try {
+            await deleteConsultation({ role, id });
+
+            // ✅ UI 즉시 반영: 선택 해제 + 상세 초기화
+            setSelectedId(null);
+            setDetail(null);
+
+            // ✅ 리스트 갱신 (같은 page 유지)
+            await loadList();
+
+            alert("삭제 완료");
+        } catch (e) {
+            console.error(e);
+            alert("삭제 실패");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     if (!authorized) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -124,7 +152,12 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-6xl mx-auto p-6 space-y-4">
-                <AdminHeader role={role} total={total} onRoleChange={handleRoleChange} onSearch={handleSearch} />
+                <AdminHeader
+                    role={role}
+                    total={total}
+                    onRoleChange={handleRoleChange}
+                    onSearch={handleSearch}
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 bg-white border rounded-2xl shadow-sm overflow-hidden">
@@ -146,7 +179,14 @@ export default function AdminPage() {
                         />
                     </div>
 
-                    <AdminDetailPanel role={role} selectedId={selectedId} loading={detailLoading} detail={detail} />
+                    <AdminDetailPanel
+                        role={role}
+                        selectedId={selectedId}
+                        loading={detailLoading}
+                        detail={detail}
+                        onDelete={handleDelete}
+                        deleting={deleting}
+                    />
                 </div>
             </div>
         </div>

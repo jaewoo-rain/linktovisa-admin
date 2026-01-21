@@ -35,3 +35,11 @@ export async function fetchConsultationDetail(params: { role: Role; id: string }
     });
     return res.data;
 }
+
+export async function deleteConsultation(params: { role: Role; id: string }) {
+    const res = await axios.delete<{ success: boolean; deletedId?: string }>(
+        "/api/consultation/delete",
+        { params }
+    );
+    return res.data;
+}
