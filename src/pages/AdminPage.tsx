@@ -5,10 +5,15 @@ import AdminPagination from "../components/Admin/AdminPagination";
 import AdminTable from "../components/Admin/AdminTable";
 import AdminDetailPanel from "../components/Admin/AdminDetailPanel";
 
+const ADMIN_PASSWORD = "2026";
 
 export default function AdminPage() {
-    const [role, setRole] = useState<Role>("employer");
+    /** 🔐 인증 여부 */
+    const [authorized, setAuthorized] = useState(false);
+    const [password, setPassword] = useState("");
 
+    /** 기존 상태들 */
+    const [role, setRole] = useState<Role>("employer");
     const [q, setQ] = useState("");
     const [page, setPage] = useState(1);
     const limit = 50;
@@ -20,6 +25,45 @@ export default function AdminPage() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [detail, setDetail] = useState<any | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+
+    /** 🔐 비밀번호 확인 */
+    const handlePasswordSubmit = () => {
+        if (password === ADMIN_PASSWORD) {
+            setAuthorized(true);
+        } else {
+            alert("비밀번호가 틀렸습니다");
+            setPassword("");
+        }
+    };
+
+    /** 🔒 인증 안되었으면 비밀번호 화면만 보여줌 */
+    if (!authorized) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-sm space-y-4">
+                    <h1 className="text-2xl font-bold text-center">관리자 접근</h1>
+
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
+                        placeholder="비밀번호 입력"
+                        className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+
+                    <button
+                        onClick={handlePasswordSubmit}
+                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                    >
+                        들어가기
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    /** ================= 기존 로직 ================= */
 
     const loadList = async (opts?: { q?: string; page?: number; role?: Role }) => {
         setLoading(true);
@@ -59,7 +103,6 @@ export default function AdminPage() {
         }
     };
 
-    // 최초/role/page 바뀔 때 리스트 로딩
     useEffect(() => {
         loadList();
         setSelectedId(null);
@@ -70,8 +113,6 @@ export default function AdminPage() {
     const handleRoleChange = (r: Role) => {
         setRole(r);
         setPage(1);
-        // q 유지할지 말지는 취향인데, 유지하면 더 편함
-        // setQ("");
     };
 
     const handleSearch = async (query: string) => {
@@ -85,7 +126,12 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-6xl mx-auto p-6 space-y-4">
-                <AdminHeader role={role} total={total} onRoleChange={handleRoleChange} onSearch={handleSearch} />
+                <AdminHeader
+                    role={role}
+                    total={total}
+                    onRoleChange={handleRoleChange}
+                    onSearch={handleSearch}
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* List */}
@@ -109,7 +155,12 @@ export default function AdminPage() {
                     </div>
 
                     {/* Detail */}
-                    <AdminDetailPanel role={role} selectedId={selectedId} loading={detailLoading} detail={detail} />
+                    <AdminDetailPanel
+                        role={role}
+                        selectedId={selectedId}
+                        loading={detailLoading}
+                        detail={detail}
+                    />
                 </div>
             </div>
         </div>
